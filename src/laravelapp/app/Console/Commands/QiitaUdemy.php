@@ -3,6 +3,10 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Weidner\Goutte\GoutteFacade as GoutteFacade;
+use Illuminate\Support\Facades\DB;
+use App\Models\QiitaArticle;
+use App\Models\UdemyVideo;
 
 class QiitaUdemy extends Command
 {
@@ -36,13 +40,22 @@ class QiitaUdemy extends Command
      * @return int
      */
     public function handle()
-    {
+    {   date_default_timezone_set('Asia/Tokyo');
+        echo 'getQiitaArticles開始時間'. date('Y-m-d H:i:s') . "\n";
         $qiitaArticles = $this->getQiitaArticles();
-        $genUdemy      = $this->genUrlUdemy($qiitaArticles);
-        print_r($genUdemy);
+        echo 'getQiitaArticles終了時間'. date('Y-m-d H:i:s'). "\n";
+
+        echo 'getUrlUdemyFromQiita開始時間'. date('Y-m-d H:i:s'). "\n";
+        $arrQiitaUdemy = $this->getUrlUdemyFromQiita($qiitaArticles);
+        echo 'getUrlUdemyFromQiita終了時間'. date('Y-m-d H:i:s'). "\n";
+
+        echo 'scrapingUdemy開始時間' . date('Y-m-d H:i:s'). "\n";
+        $scrapingUdemy = $this->scrapingUdemy($arrQiitaUdemy);
+        echo 'scrapingUdemy終了時間' . date('Y-m-d H:i:s'). "\n";
     }
 
-    public function getQiitaArticles(){
+    public function getQiitaArticles()
+    {
         $qiitaArticles = [];
         for($i = 1; $i <= 9; $i++){
             $url = "https://qiita.com/api/v2/items?page=" . $i . "&per_page=100&query=body:https://udemy.com/";
@@ -62,7 +75,8 @@ class QiitaUdemy extends Command
     
     
     
-    public function genUrlUdemy($qiitaArticles){
+    public function getUrlUdemyFromQiita($qiitaArticles)
+    {
         $qiitaUdemy =[];
         $j = 0;
         foreach($qiitaArticles as $key=>$qiitaArticle){
@@ -70,8 +84,9 @@ class QiitaUdemy extends Command
                 preg_match_all('(https?://[\w/:%#\$&\?\(\)~\.=\+\-]+)', $qiitaArticle[$i]['rendered_body'], $arrdata);
                 $arr = array_unique($arrdata[0]);
                 foreach($arr as $value){
-                   if (preg_match("/udemy.com/", $value) && $value != 'https://www.udemy.com' && $value != 'https://www.udemy.com/') {
-                    $qiitaUdemy[$j]['id'] = $qiitaArticle[$i]['id'];
+                   if (preg_match("/udemy.com/", $value) && $value != 'https://www.udemy.com' && $value != 'https://www.udemy.com/' && !preg_match("/user/", $value)) {
+
+                    $qiitaUdemy[$j]['qiita_id'] = $qiitaArticle[$i]['id'];
                     $qiitaUdemy[$j]['qiita_title'] =$qiitaArticle[$i]['title'];
                     $qiitaUdemy[$j]['qiita_url'] = $qiitaArticle[$i]['url'];
                     $qiitaUdemy[$j]['udemy_url'] = $value;
@@ -81,6 +96,60 @@ class QiitaUdemy extends Command
             }
         }
         return $qiitaUdemy;
+    }
+
+    public function scrapingUdemy($arrQiitaUdemy)
+    {
+        date_default_timezone_set('Asia/Tokyo');
+        foreach($arrQiitaUdemy as $key=>$QiitaUdemy){
+            $arrQiitaUdemy[$key]['udemy_title'] = '';
+            $arrQiitaUdemy[$key]['udemy_image'] = '';
+            $arrQiitaUdemy[$key]['udemy_description'] = '';
+            $arrQiitaUdemy[$key]['udemy_id'] = 0;
+            $goutte = GoutteFacade::request('GET', $QiitaUdemy['udemy_url']);
+            $goutte->filter('.clp-lead__title')->each(function ($node) use (&$arrQiitaUdemy,&$key) {
+                $arrQiitaUdemy[$key]['udemy_title'] = $node->text();
+            });
+            $goutte->filter('.intro-asset--img-aspect--1UbeZ img')->each(function ($node) use (&$arrQiitaUdemy,&$key) {
+                $arrQiitaUdemy[$key]['udemy_image'] = $node->attr('src');
+            });
+            $goutte->filter('div[data-purpose="safely-set-inner-html:description:description"]')->each(function ($node) use (&$arrQiitaUdemy,&$key) {
+                $arrQiitaUdemy[$key]['udemy_description'] = $node->html();
+            });
+            $goutte->filter('body')->each(function ($node) use (&$arrQiitaUdemy,&$key) {
+                $arrQiitaUdemy[$key]['udemy_id'] = $node->attr('data-clp-course-id');
+            });
+
+            if(empty(QiitaArticle::find($arrQiitaUdemy[$key]['qiita_id']))){
+                $qiita_article = [
+                    'id' => $arrQiitaUdemy[$key]['qiita_id'],
+                    'qiita_url' => $arrQiitaUdemy[$key]['qiita_url'],
+                    'title' => $arrQiitaUdemy[$key]['qiita_title'],
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s')
+                ];
+                DB::table('qiita_article')->insert($qiita_article);
+            }
+            if(empty(UdemyVideo::find($arrQiitaUdemy[$key]['udemy_id']) && is_null($arrQiitaUdemy[$key]['udemy_id'])) === false){
+                $udemy_video = [
+                    'id' => $arrQiitaUdemy[$key]['udemy_id'],
+                    'title' => $arrQiitaUdemy[$key]['udemy_title'],
+                    'udemy_url' => $arrQiitaUdemy[$key]['udemy_url'],
+                    'udemy_image_url' => $arrQiitaUdemy[$key]['udemy_image'],
+                    'description' => $arrQiitaUdemy[$key]['udemy_description'],
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s')
+                ];
+                DB::table('udemy_video')->insert($udemy_video);
+            }
+            if(is_null($arrQiitaUdemy[$key]['udemy_id']) === false){
+                $qiita_udemy = [
+                    'udemy_id' => $arrQiitaUdemy[$key]['udemy_id'],
+                    'qiita_id' => $arrQiitaUdemy[$key]['qiita_id']
+                ];
+                DB::table('qiita_udemy')->insert($qiita_udemy);
+            }
+        }
     }
     
 }
