@@ -23,3 +23,13 @@ services:
      - ./docker/db/my.cnf:/etc/mysql/conf.d/my.cnf
    ports:
      - 3306:3306
+ phpmyadmin:
+   container_name: Qiidemy_phpmyadmin
+   image: phpmyadmin/phpmyadmin
+   environment:
+    - PMA_ARBITRARY=1
+    - PMA_HOSTS=db
+    - PMA_USER=root
+    - PMA_PASSWORD=root
+   ports:
+    - 3000:80
