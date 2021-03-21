@@ -106,6 +106,7 @@ class QiitaUdemy extends Command
             $arrQiitaUdemy[$key]['udemy_image'] = '';
             $arrQiitaUdemy[$key]['udemy_description'] = '';
             $arrQiitaUdemy[$key]['udemy_id'] = 0;
+            $arrQiitaUdemy[$key]['udemy_short_description'] = '';
             $goutte = GoutteFacade::request('GET', $QiitaUdemy['udemy_url']);
             $goutte->filter('.clp-lead__title')->each(function ($node) use (&$arrQiitaUdemy,&$key) {
                 $arrQiitaUdemy[$key]['udemy_title'] = $node->text();
@@ -117,7 +118,12 @@ class QiitaUdemy extends Command
                 $arrQiitaUdemy[$key]['udemy_description'] = $node->html();
             });
             $goutte->filter('body')->each(function ($node) use (&$arrQiitaUdemy,&$key) {
-                $arrQiitaUdemy[$key]['udemy_id'] = $node->attr('data-clp-course-id');
+                if(empty($node->attr('data-clp-course-id')) === false){
+                    $arrQiitaUdemy[$key]['udemy_id'] = $node->attr('data-clp-course-id');
+                }
+            });
+            $goutte->filter("meta[name ='description']")->each(function ($node) use (&$arrQiitaUdemy,&$key) {
+                $arrQiitaUdemy[$key]['udemy_short_description'] = $node->attr('content');
             });
 
             if(empty(QiitaArticle::find($arrQiitaUdemy[$key]['qiita_id']))){
@@ -130,19 +136,22 @@ class QiitaUdemy extends Command
                 ];
                 DB::table('qiita_article')->insert($qiita_article);
             }
-            if(empty(UdemyVideo::find($arrQiitaUdemy[$key]['udemy_id']) && is_null($arrQiitaUdemy[$key]['udemy_id'])) === false){
+
+            if(empty(UdemyVideo::find($arrQiitaUdemy[$key]['udemy_id'])) && $arrQiitaUdemy[$key]['udemy_id'] != 0){
                 $udemy_video = [
                     'id' => $arrQiitaUdemy[$key]['udemy_id'],
                     'title' => $arrQiitaUdemy[$key]['udemy_title'],
                     'udemy_url' => $arrQiitaUdemy[$key]['udemy_url'],
                     'udemy_image_url' => $arrQiitaUdemy[$key]['udemy_image'],
+                    'short_description' => $arrQiitaUdemy[$key]['udemy_short_description'],
                     'description' => $arrQiitaUdemy[$key]['udemy_description'],
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s')
                 ];
                 DB::table('udemy_video')->insert($udemy_video);
             }
-            if(is_null($arrQiitaUdemy[$key]['udemy_id']) === false){
+
+            if(empty($arrQiitaUdemy[$key]['udemy_id']) === false){
                 $qiita_udemy = [
                     'udemy_id' => $arrQiitaUdemy[$key]['udemy_id'],
                     'qiita_id' => $arrQiitaUdemy[$key]['qiita_id']
