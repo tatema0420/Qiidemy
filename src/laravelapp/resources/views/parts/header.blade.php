@@ -5,7 +5,7 @@
           <h1 class="logo">Qiidemy</h1>
           <ul class="nav">
             <li>Qiitaの投稿で紹介されたUdemyの動画Top20を毎日更新</li>
-            <li><a href="https://twitter.com/tatemaru_tech">Contact me</a></li>
+            <li><a href="http://tateblg.com">Contact me</a></li>
           </ul>
         </div>
     </header>
