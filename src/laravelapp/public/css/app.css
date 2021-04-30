@@ -4,15 +4,13 @@
     -webkit-box-sizing:border-box;
     font-family:arial;
   }
-  body{background:#ecf0f1; font-family:arial; margin:0; color:#888}
-  .banner{
-    background:#00DAFC;
-    line-height:400px;
-    text-align:center;
-    color:#fff;
-    font-size:60px;
-    height:400px;
-    width: 100%;
+
+  body{
+    background:#ecf0f1; 
+    font-family:arial; 
+    margin:0; 
+    color:#888;
+    height: 100%;
   }
   
   .header{
@@ -42,13 +40,13 @@
     max-width:1200px;
     padding:0 15px;
     width:100%;
+    height: 100%;
   }
   .container:after {
       clear: both;
       content: "";
       display: table;
   }
-  .footer{background:#0A95AA; color:#fff; height:100px}
   .copy{
     font-size:10px;
     text-align:center
@@ -71,11 +69,6 @@
     top:auto;
     bottom:0;
   }
-
-  .container{
-      height: 100%;
-  }
-
 
 .html_card,
 .ogp_card {
@@ -149,19 +142,12 @@
   box-shadow:0px 0px 3px 0px #cccccc;
 }
 
+footer{
+  margin-top: auto;
+}
 
-
-  /* .footer {
-    background-color: #414141;
-    width: 100%;
-    text-align: left;
-    font-family: sans-serif;
-    font-weight: bold;
-    font-size: 16px;
-  }
-  
-  @media (max-width: 767px) {
-    .footer {
-      font-size: 14px;
-    }
-  } */
+#wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}

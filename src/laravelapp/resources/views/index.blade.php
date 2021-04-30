@@ -18,11 +18,25 @@
         </p>{{$value->udemy_short_description}}
         <p class="card_bt">
             <a class="card_link" href="{{$value->udemy_url}}" >コースを確認する</a>
-            <a class="card_link" href="サイトURL" >詳細を見る</a>
         </p>
+        <h4 class="js-accordion-title">Qiita記事一覧（クリックで開きます）</h4>
+        <div class="qiita_article_list" id="udemy_id_{{$value->udemy_id}}" style="display: none;">
+            @foreach ($value->qiita as $qiitaInfo)
+                <p class="qiita_article_title"><a href="{{$qiitaInfo->qiita_url}}">{{$qiitaInfo->title}}</a></p>
+            @endforeach
+       </div>
     </div>
     @endforeach
 </div>
+
+
+<script>
+$(function () {
+    $('.js-accordion-title').on('click', function () {
+    $(this).next().slideToggle();
+  });
+});
+</script>
 
 <script>
     var ctx = document.getElementById('myChart').getContext('2d');
