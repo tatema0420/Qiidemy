@@ -25,6 +25,8 @@ php artisan command:qiita_udemy
 ```
  
 # Note
+
+Execute ddl.sql on the MySQL server.
  
 For the database information and Qiita_API items in the env file, please refer to the env_sample and register them according to your environment.
 
