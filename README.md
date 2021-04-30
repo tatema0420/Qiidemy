@@ -27,6 +27,10 @@ php artisan command:qiita_udemy
 # Note
  
 For the database information and Qiita_API items in the env file, please refer to the env_sample and register them according to your environment.
+
+In a local environment, use docker.
+
+In a test or production environment, deploy only the files under src.
  
 # Author
  
