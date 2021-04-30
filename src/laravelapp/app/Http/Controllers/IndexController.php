@@ -12,9 +12,12 @@ class IndexController extends Controller
 {
 
     public function index(){
-        $UdemyVideo = new UdemyVideo;
+        $UdemyVideo = new UdemyVideo();
+        $QiitaArticle = new QiitaArticle();
         $udemyRankingData = $UdemyVideo->getUdemyRankingData(20);
-
+        for ($i = 0; $i<count($udemyRankingData); $i++){
+            $udemyRankingData[$i]->qiita = $QiitaArticle->getQiitaArticleInfo($udemyRankingData[$i]->udemy_id);
+        }
         return view('index',compact('udemyRankingData'));
     }
 }
