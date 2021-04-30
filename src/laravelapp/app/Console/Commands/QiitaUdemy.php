@@ -40,27 +40,41 @@ class QiitaUdemy extends Command
      * @return int
      */
     public function handle()
-    {   date_default_timezone_set('Asia/Tokyo');
-        echo 'getQiitaArticles開始時間'. date('Y-m-d H:i:s') . "\n";
-        $qiitaArticles = $this->getQiitaArticles();
-        echo 'getQiitaArticles終了時間'. date('Y-m-d H:i:s'). "\n";
+    {   
+        DB::beginTransaction();
+        try {
+            date_default_timezone_set('Asia/Tokyo');
 
-        echo 'getUrlUdemyFromQiita開始時間'. date('Y-m-d H:i:s'). "\n";
-        $arrQiitaUdemy = $this->getUrlUdemyFromQiita($qiitaArticles);
-        echo 'getUrlUdemyFromQiita終了時間'. date('Y-m-d H:i:s'). "\n";
+            DB::table('qiita_article')->delete();
+            DB::table('qiita_udemy')->delete();
+            DB::table('udemy_video')->delete();
 
-        echo 'scrapingUdemy開始時間' . date('Y-m-d H:i:s'). "\n";
-        $scrapingUdemy = $this->scrapingUdemy($arrQiitaUdemy);
-        echo 'scrapingUdemy終了時間' . date('Y-m-d H:i:s'). "\n";
+            echo 'getQiitaArticles開始時間'. date('Y-m-d H:i:s') . "\n";
+            $qiitaArticles = $this->getQiitaArticles();
+            echo 'getQiitaArticles終了時間'. date('Y-m-d H:i:s'). "\n";
+
+            echo 'getUrlUdemyFromQiita開始時間'. date('Y-m-d H:i:s'). "\n";
+            $arrQiitaUdemy = $this->getUrlUdemyFromQiita($qiitaArticles);
+            echo 'getUrlUdemyFromQiita終了時間'. date('Y-m-d H:i:s'). "\n";
+
+            echo 'scrapingUdemy開始時間' . date('Y-m-d H:i:s'). "\n";
+            $scrapingUdemy = $this->scrapingUdemy($arrQiitaUdemy);
+            echo 'scrapingUdemy終了時間' . date('Y-m-d H:i:s'). "\n";
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+        }
     }
 
     public function getQiitaArticles()
     {
         $qiitaArticles = [];
+        $qiita_api = env('Qiita_API');
         for($i = 1; $i <= 9; $i++){
             $url = "https://qiita.com/api/v2/items?page=" . $i . "&per_page=100&query=body:https://udemy.com/";
             $ch = curl_init(); // はじめ
-            $headers = array('Authorization: Bearer 461605b7d06b982422af1fea59a5be69063f0226');
+            $headers = array('Authorization: Bearer ' . $qiita_api);
             //オプション
             curl_setopt($ch, CURLOPT_URL, $url); 
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
