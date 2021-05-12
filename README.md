@@ -36,5 +36,5 @@ In a test or production environment, deploy only the files under src.
  
 # Author
  
-* tatema0420
+* tatemaru
 
